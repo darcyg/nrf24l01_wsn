@@ -1,0 +1,187 @@
+Cold reset
+0 [INFO] spi (b4) device spi2
+0 [INFO] init nrf nrf0
+0 [INFO] spi init <nrf0> (spi2)
+0 [INFO] irq reg 0
+0 [INFO] nrf init done
+500 [INFO] bip
+1000 [INFO] bip
+1090 [INFO] RTS me 04 11
+1101 [INFO] RTS me 04 11
+1111 [INFO] RTS me 04 11
+1612 [INFO] bip
+2112 [INFO] bip
+2166 [INFO] RTS me 04 11
+2666 [INFO] bip
+3166 [INFO] bip
+3422 [INFO] RTS me 04 11
+3922 [INFO] bip
+4053 [INFO] RTS me 04 11
+4553 [INFO] bip
+5053 [INFO] bip
+5553 [INFO] bip
+6053 [INFO] bip
+6352 [INFO] RTS me 04 11
+6353 [INFO] RTS me 04 11
+6353 [INFO] tcp app
+6353 [INFO] RTS me 04 11
+6354 [INFO] tcp app
+6354 [INFO] no rsp
+6854 [INFO] bip
+6986 [INFO] RTS me 04 11
+6987 [INFO] tcp app
+6987 [INFO] RTS me 04 11
+6987 [INFO] tcp app
+6988 [INFO] RTS me 04 11
+6988 [INFO] tcp app
+6988 [INFO] RTS me 04 11
+6989 [INFO] tcp app
+6989 [INFO] RTS me 04 11
+6989 [INFO] tcp app
+7489 [INFO] bip
+7494 [INFO] RTS me 04 11
+7494 [INFO] RTS me 04 11
+7495 [INFO] tcp app
+7495 [INFO] RTS me 04 11
+7495 [INFO] tcp app
+7495 [INFO] no rsp
+7754 [INFO] RTS me 04 11
+7754 [INFO] tcp app
+7754 [INFO] RTS me 04 11
+7755 [INFO] tcp app
+7755 [INFO] RTS me 04 11
+7755 [INFO] tcp app
+7756 [INFO] RTS me 04 11
+7756 [INFO] tcp app
+7757 [INFO] RTS me 04 11
+7757 [INFO] tcp app
+8257 [INFO] bip
+8757 [INFO] bip
+9189 [INFO] RTS me 04 11
+9190 [INFO] RTS me 04 11
+9190 [INFO] tcp app
+9191 [INFO] RTS me 04 11
+9191 [INFO] no rsp
+9201 [INFO] RTS me 04 11
+9202 [INFO] tcp app
+9202 [INFO] no rsp
+9310 [INFO] RTS me 04 11
+9311 [INFO] tcp app
+9311 [INFO] RTS me 04 11
+9311 [INFO] tcp app
+9312 [INFO] RTS me 04 11
+9312 [INFO] tcp app
+9313 [INFO] RTS me 04 11
+9313 [INFO] tcp app
+9313 [INFO] MAX_RT 0
+9324 [INFO] RTS me 04 11
+9324 [INFO] tcp app
+9824 [INFO] bip
+9835 [INFO] RTS me 04 11
+9836 [INFO] RTS me 04 11
+9836 [INFO] tcp app
+9837 [INFO] RTS me 04 11
+9837 [INFO] tcp app
+9837 [INFO] no rsp
+10171 [INFO] RTS me 04 11
+10171 [INFO] tcp app
+10172 [INFO] RTS me 04 11
+10172 [INFO] tcp app
+10172 [INFO] MAX_RT 0
+10182 [INFO] RTS me 04 11
+10182 [INFO] tcp app
+10183 [INFO] RTS me 04 11
+10183 [INFO] tcp app
+10183 [INFO] RTS me 04 11
+10184 [INFO] tcp app
+10684 [INFO] bip
+11184 [INFO] bip
+11684 [INFO] bip
+12184 [INFO] bip
+12684 [INFO] bip
+13184 [INFO] bip
+13684 [INFO] bip
+14184 [INFO] bip
+14684 [INFO] bip
+15184 [INFO] bip
+15684 [INFO] bip
+16184 [INFO] bip
+16684 [INFO] bip
+Cold reset
+0 [INFO] spi (b4) device spi2
+0 [INFO] init nrf nrf0
+0 [INFO] spi init <nrf0> (spi2)
+0 [INFO] irq reg 0
+0 [INFO] nrf init done
+452 [INFO] RTS me 04 11
+453 [INFO] RTS me 04 11
+454 [INFO] RTS me 04 11
+454 [INFO] no rsp
+682 [INFO] RTS me 04 11
+682 [INFO] cp 7
+683 [INFO] RTS me 04 11
+690 [INFO] RTS me 04 11
+693 [INFO] RTS me 04 11
+1193 [INFO] bip
+1693 [INFO] bip
+2193 [INFO] bip
+2693 [INFO] bip
+3193 [INFO] bip
+3693 [INFO] bip
+4193 [INFO] bip
+4693 [INFO] bip
+5193 [INFO] bip
+5693 [INFO] bip
+6193 [INFO] bip
+6693 [INFO] bip
+7193 [INFO] bip
+7693 [INFO] bip
+8193 [INFO] bip
+8693 [INFO] bip
+9193 [INFO] bip
+9693 [INFO] bip
+10193 [INFO] bip
+10693 [INFO] bip
+11193 [INFO] bip
+11693 [INFO] bip
+Cold reset
+0 [INFO] spi (b4) device spi2
+0 [INFO] init nrf nrf0
+0 [INFO] spi init <nrf0> (spi2)
+0 [INFO] irq reg 0
+0 [INFO] nrf init done
+500 [INFO] bip
+603 [INFO] RTS me 04 11
+604 [INFO] RTS me 04 11
+605 [INFO] RTS me 04 11
+605 [INFO] no rsp
+831 [INFO] RTS me 04 11
+832 [INFO] RTS me 04 11
+832 [INFO] RTS me 04 11
+833 [INFO] RTS me 04 11
+834 [INFO] RTS me 04 11
+1334 [INFO] bip
+1538 [INFO] RTS me 04 11
+1538 [INFO] RTS me 04 11
+1539 [INFO] RTS me 04 11
+1539 [INFO] no rsp
+1903 [INFO] RTS me 04 11
+1904 [INFO] RTS me 04 11
+1905 [INFO] RTS me 04 11
+1906 [INFO] RTS me 04 11
+1906 [INFO] RTS me 04 11
+2407 [INFO] bip
+2444 [INFO] RTS me 04 11
+2445 [INFO] RTS me 04 11
+2446 [INFO] RTS me 04 11
+2446 [INFO] no rsp
+2616 [INFO] RTS me 04 11
+2617 [INFO] RTS me 04 11
+2617 [INFO] RTS me 04 11
+2618 [INFO] RTS me 04 11
+2619 [INFO] RTS me 04 11
+3119 [INFO] bip
+3619 [INFO] bip
+4119 [INFO] bip
+4619 [INFO] bip
+
