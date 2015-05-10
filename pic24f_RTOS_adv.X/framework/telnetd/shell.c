@@ -35,9 +35,9 @@
 #include "shell.h"
 
 #include <string.h>
-#include "../HardwareProfile.h"
-#include "../uart2.h"
-#include "../IR_control.h"
+#include "board_config.h"
+#include "logger.h"
+#include "IR_control.h"
 
 extern volatile unsigned long blinkLED_timer1 ;
 extern volatile unsigned long ir_timer1;

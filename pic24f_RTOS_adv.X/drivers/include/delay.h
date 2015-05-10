@@ -19,7 +19,7 @@
 #ifndef DELAY_H
 #define DELAY_H
 
-#include "HardwareProfile.h"
+#include "board_config.h"
 
 extern void __delay32(unsigned long);
 

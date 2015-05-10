@@ -16,7 +16,7 @@
  * this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "HardwareProfile.h"
+#include "board_config.h"
 
 // Compile this driver only if needed
 #if defined(EXT_IRQ_INT0) || defined(EXT_IRQ_INT1) || defined(EXT_IRQ_INT2)

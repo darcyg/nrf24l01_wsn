@@ -55,6 +55,9 @@ PROJECT_NAME:=$(shell basename "$(PWD)")
 # build
 build: .build-post
 
+debug:
+	make build MP_EXTRA_CC_PRE="-DDEBUG=1"
+
 complete:
 	rm -f cscope* .ycm* tags tags.files .clang_* tags
 	make MP_CC="cc_args.py /opt/microchip/xc16/v1.11/bin/xc16-gcc" build -B

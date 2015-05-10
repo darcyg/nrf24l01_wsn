@@ -68,7 +68,7 @@ struct nrf24l01_link_info {
 };
 
 // Avoid allocating this structure in FreeRTOS task stack
-struct nrf24l01_link_info nrf_link;
+static struct nrf24l01_link_info nrf_link;
 
 // link management functions
 static void nrf_link_task(void *arg);
@@ -87,11 +87,11 @@ static inline void nrf_link_handle_tx(struct device *dev, uint8_t status);
 
 uint8_t timer_id = 0xde;
 
-void nrf_link_init(const char *device, uip_ipaddr_t ip, uip_ipaddr_t gateway, uip_ipaddr_t mask, UBaseType_t priority)
+void nrf_link_init(const int dev_id, uip_ipaddr_t ip, uip_ipaddr_t gateway, uip_ipaddr_t mask, UBaseType_t priority)
 {
-    struct device* dev = get_device(device);
+    struct device* dev = get_device(dev_id);
     if (dev == NULL) {
-        log_error("nrf dev <%s> not found", device);
+        log_error("nrf dev <%d> not found", dev_id);
         return;
     }
     // Copy network configuration
@@ -100,7 +100,7 @@ void nrf_link_init(const char *device, uip_ipaddr_t ip, uip_ipaddr_t gateway, ui
     memcpy(nrf_link.mask,    mask,    sizeof(uip_ipaddr_t));
 
     // Create nrf_link task
-    xTaskCreate(nrf_link_task, "uip", 2 * configMINIMAL_STACK_SIZE, dev, priority, &nrf_link.task);
+    xTaskCreate(nrf_link_task, "uip", configMINIMAL_STACK_SIZE, dev, priority, &nrf_link.task);
     // Create timeout timer
     nrf_link.timer = xTimerCreate("nrf", (TickType_t)pdMS_TO_TICKS(NRF_TIMEOUT), pdFALSE,
                                   &timer_id, nrf_link_timeout_callback);
@@ -179,10 +179,8 @@ void nrf_link_send_buffer(struct nrf_buffer *buf)
     xTaskNotifyGive(nrf_link.task);
 }
 
-static void nrf_link_task(void *arg)
+static void nrf_link_task_init(struct device *dev)
 {
-    struct device *dev = (struct device*)arg;
-
     // Disable device
     nrf24l01_clear_ce(dev);
 
@@ -254,6 +252,13 @@ static void nrf_link_task(void *arg)
     nrf_link.tx_packets = 0;
     nrf_link.rx_dropped = 0;
     nrf_link.tx_dropped = 0;
+}
+
+static void nrf_link_task(void *arg)
+{
+    struct device *dev = (struct device*)arg;
+
+    nrf_link_task_init(dev);
 
     while (1) {
         ulTaskNotifyTake(pdTRUE, (TickType_t)portMAX_DELAY);

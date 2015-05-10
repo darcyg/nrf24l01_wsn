@@ -18,6 +18,8 @@
 
 #include <stdint.h>
 #include <stdio.h>
+// Board configuration
+#include "board_config.h"
 // os modules
 #include "FreeRTOS.h"
 #include "task.h"
@@ -35,24 +37,10 @@
 #include "pic24f_adc.h"
 #include "ir_control.h"
 
-#define nrftask_PRIORITY    (tskIDLE_PRIORITY + 3)
-#define maintask_PRIORITY   (tskIDLE_PRIORITY + 2)
-#define rxtask_PRIORITY     (tskIDLE_PRIORITY + 1)
-
-#define BLINK_LED_PIN (GPIO_PORTB | 4)
-#define TST_BTN_PIN   (GPIO_PORTA | 4)
-
-#define TEMP_SENSOR_PIN 4
-#define LUM_SENSOR_PIN  5
-
-#define CONFIGURE_IP(ip, addr) uip_ipaddr(ip, addr)
-#define IP_ADDR  192, 168,  20, 4
-#define GW_ADDR  192, 168,  20, 1
-#define NET_MASK 255, 255, 255, 0
-#define MQTT_SRV 192, 168,  20, 1
-
 static void mqtt_message_callback(const char* topic, uint8_t* payload, int payload_length);
 static int mqtt_main_connect(struct mqtt_client* mqtt_client, uip_ipaddr_t *server);
+
+extern TaskHandle_t nrf_task_handle;
 
 static void main_task(void *arg)
 {
@@ -83,8 +71,11 @@ static void main_task(void *arg)
     // Init tcp test app module
     tcp_hello_init();
     // Init mqtt
-    mqtt_init(&mqtt_client, "home01", mqtt_message_callback);
+    mqtt_init(&mqtt_client, MQTT_NODE_ID, mqtt_message_callback);
     mqtt_set_blocking_mode(&mqtt_client, 0);
+
+    // Print unused byte count in heap for debug purposes
+    log_info("heap free %d", xPortGetFreeHeapSize());
 
     while (1) {
         net_poll(pdMS_TO_TICKS(100));
@@ -98,7 +89,7 @@ static void main_task(void *arg)
         if(timer_expired(&timer_temp)) {
             timer_reset(&timer_temp);
             sprintf(mqtt_temp_buf, "t%04dl%02d",
-                    (32*adc_get_value(TEMP_SENSOR_PIN))-5000,
+                    (32*adc_get_value(TEMP_SENSOR_PIN))-5000, // Convert 0->1023 to Temp*100
                     adc_get_value(LUM_SENSOR_PIN));
 
             mqtt_publish_string(&mqtt_client, "home/th", mqtt_temp_buf);
@@ -141,20 +132,21 @@ void vApplicationStackOverflowHook( TaskHandle_t xTask, signed char *pcTaskName)
 // Application main function
 int main(void)
 {
-    // Init device hardware
-    setup_device();
-    // Create main task
-    xTaskCreate(main_task, "main", 3 * configMINIMAL_STACK_SIZE, NULL, maintask_PRIORITY, NULL);
-    // Init serial module
-    serial_init(rxtask_PRIORITY);
-    // Init nrf24l01 link module + tcp/ip stack
+    // Init in a new stack frame
     {
+        // Init device hardware
+        setup_device();
+        // Create main task
+        xTaskCreate(main_task, "app", configMINIMAL_STACK_SIZE + 160, NULL, maintask_PRIORITY, NULL);
+        // Init serial module
+        serial_init(rxtask_PRIORITY);
+        // Init nrf24l01 link module + tcp/ip stack
         uip_ipaddr_t ip, gateway, mask;
         CONFIGURE_IP(&ip,      IP_ADDR);  // Host IP
         CONFIGURE_IP(&gateway, GW_ADDR);  // Gateway IP
         CONFIGURE_IP(&mask,    NET_MASK); // Net mask
         // Init tcp link interface
-        nrf_link_init("nrf0", ip, gateway, mask, nrftask_PRIORITY);
+        nrf_link_init(DEV_NRF24L01_0, ip, gateway, mask, nrftask_PRIORITY);
         // Init uip stack
         uip_init();
         // Set network parameters
@@ -162,6 +154,7 @@ int main(void)
         uip_setdraddr(gateway);
         uip_setnetmask(mask);
     }
+
     // Start the scheduler
     vTaskStartScheduler();
 
@@ -192,34 +185,52 @@ static void mqtt_message_callback(const char* topic, uint8_t* payload, int paylo
 {
     static int rc5_toggle=0;
 
-    unsigned long data;
+    uint32_t data = 0;
     unsigned int i;
     payload[payload_length] = 0;
-    log_info("mqtt cb %s : %s", topic, payload);
+    log_debug("mqtt cb %s : %s", topic, payload);
 
     // TODO: switch on topic
+    if(payload_length>8) {
+        log_error("tv cmd too long (%d)", payload_length);
+        return;
+    }
+
+    // Parse tv cmd data
+    for(i=1; i<payload_length; i++) {
+        data |= ((uint32_t)char2hex(payload[i])) << ((payload_length-i-1)*4);
+    }
 
     switch (payload[0]) {
     case 's': // RC5 code
-        if(payload_length>8) {
-            log_error("rc5 cmd too long (%d)", payload_length);
-            break;
+        // Update second start bit for normal RC5 cmd set
+        if(payload[0] == 's') {
+            data |= 0x1000;
         }
-        data = 0;
-        for(i=1; i<payload_length; i++) {
-            data |= ((unsigned long)char2hex(payload[i])) << ((payload_length-i-1)*4);
-        }
+    case 't': // RC5 (7bits) code
         if(rc5_toggle) {
-            data &= 0x7FF;
+            data &= 0x17FF;
             rc5_toggle = 0;
         }
         else {
             data |= 0x800;
             rc5_toggle = 1;
         }
-        ir_sendRC5(data, (payload_length-1)*4);
-        ir_sendRC5(data, (payload_length-1)*4);
+        ir_sendRC5(data, (payload_length-1)*4+1);
+        ir_sendRC5(data, (payload_length-1)*4+1);
         break;
+
+    case 'c': // Canal code
+        data &= 0xFFF0FF;
+        ir_sendCanal(data, (payload_length-1)*4-1);
+        data |= 0x000100;
+        ir_sendCanal(data, (payload_length-1)*4-1);
+        break;
+
+    case 'a': // Apple TV code
+        ir_sendNEC(data, (payload_length-1)*4); // Cannot toggle : it sends the cmd twice
+        break;
+
     default:
         log_error("Unknow command type %c", payload[0]);
     }

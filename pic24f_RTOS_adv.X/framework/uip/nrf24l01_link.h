@@ -45,7 +45,7 @@ struct nrf_buffer {
     struct nrf_buffer *next;
 };
 
-void nrf_link_init(const char *device, uip_ipaddr_t ip, uip_ipaddr_t gateway, uip_ipaddr_t mask, UBaseType_t priority);
+void nrf_link_init(const int dev_id, uip_ipaddr_t ip, uip_ipaddr_t gateway, uip_ipaddr_t mask, UBaseType_t priority);
 
 struct nrf_buffer* nrf_link_get_buffer(void);
 

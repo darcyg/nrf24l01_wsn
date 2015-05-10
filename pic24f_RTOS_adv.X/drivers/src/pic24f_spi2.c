@@ -16,7 +16,7 @@
  * this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "HardwareProfile.h"
+#include "board_config.h"
 #include "FreeRTOS.h"
 #include "spi.h"
 #include "pic24f_gpio.h"
@@ -52,31 +52,10 @@ struct spi_driver pic24f_spi2_driver = {
 #define SPI_PPRE_16 0x0001
 #define SPI_PPRE_64 0x0000
 
-struct pic24f_spi_info {
-    // Transfer queue
-    struct spi_msg *head;
-    struct spi_msg *tail;
-    // Current request
-    struct spi_req *req;
-    // Index on request buffers
-    unsigned int tx_index;
-    unsigned int rx_index;
-    // Master device configuration
-    uint16_t       *spi_con1;
-    uint16_t       *spi_con2;
-    uint16_t       *spi_stat;
-    // TODO: add other registers
-};
-
 static volatile struct pic24f_spi_info *spi2_master_info = NULL;
 
 static int pic24f_spi2_init(struct bus *dev)
 {
-
-    dev->priv = pvPortMalloc(sizeof(struct pic24f_spi_info));
-    if (!dev->priv) {
-        return -ENOMEM;
-    }
     // Init queue ptrs
     ((struct pic24f_spi_info*)dev->priv)->head = NULL;
     ((struct pic24f_spi_info*)dev->priv)->tail = NULL;
@@ -94,7 +73,6 @@ static int pic24f_spi2_init(struct bus *dev)
     IFS2bits.SPI2IF = 0;
     IEC2bits.SPI2IE = 1; // Enable interrupt
     IPC8bits.SPI2IP = configKERNEL_INTERRUPT_PRIORITY;
-    // IPC8bits.SPI2IP = 5;
 
     // init SPI default : Fsck=16M/16/1 = 1M
     // CKE = 1: Change SDO on CLK transition from low to high
@@ -106,7 +84,7 @@ static int pic24f_spi2_init(struct bus *dev)
     SPI2STATbits.SISEL = 0b101; // Interrupt when TX FIFO is empty
     SPI2STATbits.SPIROV = 0;    // Clear overflow flag
 
-    log_info("spi (%x) device %s", SPI2STAT, dev->name);
+    log_debug("spi (%x) device %d", SPI2STAT, dev->id);
     return 0;
 }
 
@@ -117,7 +95,7 @@ static int pic24f_spi_init_dev(struct bus *bus, struct device *dev)
     // Init chip select pin
     gpio_set(spi_dev->chip_select, !(spi_dev->mode & SPI_CS_HIGH));
     gpio_configure(spi_dev->chip_select, 0, 0);
-    log_info("spi init <%s> (%s)", dev->name, bus->name);
+    log_debug("spi init <%d> (%d)", dev->id, bus->id);
     return 0;
 }
 
@@ -137,16 +115,11 @@ static int pic24f_spi_exec_request(struct pic24f_spi_info *spi_info)
     // Write message data
     spi_info->tx_index = 0;
     spi_info->rx_index = 0;
-    // log_info("req %d %x", spi_info->req->len, SPI2STAT);
-    // for(; !(SPI2STATbits.SPITBF) && (spi_info->tx_index<spi_info->req->len);) {
+    // log_debug("req %d %x", spi_info->req->len, SPI2STAT);
+
     for (i = 0; (i < 8) && (spi_info->tx_index < spi_info->req->len); i++) {
         SPI2BUF = spi_info->req->tx_buf[spi_info->tx_index++];
     }
-    // if ((spi_info->tx_index < 8) && (SPI2STATbits.SPITBF)) {
-    //     // TODO: process error
-    //     log_error("spi2: i=%d", spi_info->tx_index);
-    //     return -EDATA;
-    // }
     return 0;
 }
 
@@ -164,7 +137,6 @@ static int pic24f_spi_transfer(struct spi_device *spi, struct spi_msg *msg)
     portENTER_CRITICAL();
     if (spi_info->head) {
         // Transfer on going, add message to queue
-        // log_info("on going");
         spi_info->tail->next = msg;
         spi_info->tail = msg;
         portEXIT_CRITICAL();
@@ -178,7 +150,7 @@ static int pic24f_spi_transfer(struct spi_device *spi, struct spi_msg *msg)
     spi_info->req = msg->req;
     // Configure SPI module according to device
     SPI2CON1 = 0x0020 | (!(msg->dev->mode & SPI_CPHA) << 8) | ((msg->dev->mode & SPI_CPOL) << 5) | ((SPI_SPRE_1 | SPI_PPRE_16) & 0x001F);
-    // log_info("config %x", SPI2CON1);
+    log_debug("config %x", SPI2CON1);
     // Enable SPI module
     SPI2STATbits.SPIEN = 1;
     // Start new transfer
@@ -210,13 +182,12 @@ void __attribute__((__interrupt__, auto_psv)) _SPI2Interrupt(void)
         for (i = 0; (i < 8) && (spi2_master_info->tx_index < spi2_master_info->req->len); i++) {
             SPI2BUF = spi2_master_info->req->tx_buf[spi2_master_info->tx_index++];
         }
-        // log_info("IRQ %d %d (%x)", spi2_master_info->rx_index, spi2_master_info->tx_index, SPI2STAT);
         return;
     }
 
     // Request transfer done, check errors
     if (spi2_master_info->rx_index != spi2_master_info->tx_index) {
-        log_info("IRQ error %d %d (%x)", spi2_master_info->rx_index, spi2_master_info->tx_index, SPI2STAT);
+        log_error("IRQ error %d %d (%x)", spi2_master_info->rx_index, spi2_master_info->tx_index, SPI2STAT);
     }
 
     // Start new spi request transfer
@@ -241,7 +212,6 @@ void __attribute__((__interrupt__, auto_psv)) _SPI2Interrupt(void)
         // Message on queue, send it
         int ret;
         uint16_t spi_conf;
-        // log_info("IRQ new msg");
         spi2_master_info->head = spi2_master_info->head->next;
         spi2_master_info->req = spi2_master_info->head->req;
 
@@ -251,7 +221,6 @@ void __attribute__((__interrupt__, auto_psv)) _SPI2Interrupt(void)
             // Disable SPI module
             SPI2STATbits.SPIEN = 0;
             SPI2CON1 = spi_conf;
-            // log_info("IRQ config %x", SPI2CON1);
             // Enable SPI module
             SPI2STATbits.SPIEN = 1;
         }

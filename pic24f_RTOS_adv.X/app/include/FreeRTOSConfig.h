@@ -66,7 +66,7 @@
 #ifndef FREERTOS_CONFIG_H
 #define FREERTOS_CONFIG_H
 
-#include "HardwareProfile.h"
+#include "board_config.h"
 
 /*-----------------------------------------------------------
  * Application specific definitions.
@@ -89,7 +89,7 @@
 #define configCPU_CLOCK_HZ              ( ( unsigned long )FCY )
 #define configMAX_PRIORITIES            ( 4 )
 #define configMINIMAL_STACK_SIZE        ( 164 )
-#define configTOTAL_HEAP_SIZE           ( ( size_t )3200 )
+#define configTOTAL_HEAP_SIZE           ( ( size_t )2450 )
 #define configMAX_TASK_NAME_LEN         ( 4 )
 #define configUSE_TRACE_FACILITY        0
 #define configUSE_16_BIT_TICKS          1
@@ -98,7 +98,7 @@
 /* Enable software timers */
 #define configUSE_TIMERS                1
 #define configTIMER_TASK_PRIORITY       ( configMAX_PRIORITIES - 1 )
-#define configTIMER_QUEUE_LENGTH        3
+#define configTIMER_QUEUE_LENGTH        10
 #define configTIMER_TASK_STACK_DEPTH    configMINIMAL_STACK_SIZE
 
 /* Set the following definitions to 1 to include the API function, or zero
@@ -112,6 +112,9 @@
 #define INCLUDE_vTaskDelayUntil           1
 #define INCLUDE_vTaskDelay                1
 #define INCLUDE_xTaskGetCurrentTaskHandle 1
+
+#define INCLUDE_pcTaskGetTaskName         1
+#define INCLUDE_uxTaskGetStackHighWaterMark 1
 
 #define configKERNEL_INTERRUPT_PRIORITY 0x01
 

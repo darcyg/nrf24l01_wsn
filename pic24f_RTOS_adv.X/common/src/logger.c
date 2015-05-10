@@ -1,5 +1,5 @@
 #include "logger.h"
-#include "HardwareProfile.h"
+#include "board_config.h"
 #include "FreeRTOS.h"
 #include "task.h"
 
@@ -10,8 +10,6 @@
 
 // Flush on uart2
 #include "pic24f_uart2.h"
-
-#define MAGIC_KEY 'K'
 
 #define LOGGER_DEF_LEVEL(lvl, msg) [lvl] = msg,
 static char* log_levels[] = {
@@ -53,8 +51,7 @@ void log_printk(uint8_t level, const char* format, ...)
         // ERROR
         return;
     }
-    // ((struct msg_header*)tmp_buf)->magic_key = MAGIC_KEY;
-    ((struct msg_header*)tmp_buf)->size = written; // (--written); // Remove trailing zero
+    ((struct msg_header*)tmp_buf)->size = written;
     ((struct msg_header*)tmp_buf)->level = level;
     ((struct msg_header*)tmp_buf)->timestamp = xTaskGetTickCount();
 
@@ -83,32 +80,15 @@ void log_flush_msg()
 
     if (log_buf.r != log_buf.w) {
         uint16_t timestamp = 0;
-        // printk("flush %x %x %x\n\r", (unsigned int)log_buf.buffer, (unsigned int)log_buf.w, (unsigned int)log_buf.r);
         // Message in buffer
         timestamp = log_buf.r[0] & 0x00FF;
         log_buf.r = log_buf.buffer + (unsigned int)(((log_buf.r - log_buf.buffer) + 1) & (LOG_BUFFER_SIZE - 1));
         timestamp = timestamp + (log_buf.r[0] << 8);
         log_buf.r = log_buf.buffer + (unsigned int)(((log_buf.r - log_buf.buffer) + 1) & (LOG_BUFFER_SIZE - 1));
 
-//         if (timestamp < 10) goto ts_10;
-//         if (timestamp < 100) goto ts_100;
-//         if (timestamp < 1000) goto ts_1000;
-//         if (timestamp < 10000) goto ts_10000;
-//
-//         goto ts_done;
-// ts_10:
-//         uart2_putc(' ');
-// ts_100:
-//         uart2_putc(' ');
-// ts_1000:
-//         uart2_putc(' ');
-// ts_10000:
-//         uart2_putc(' ');
-// ts_done:
-
-        sprintf(buffer, "%u ", timestamp);
+        sprintf(buffer, "%u", timestamp);
         uart2_print(buffer);
-        uart2_putc('[');
+        uart2_print(" [");
         uart2_print(log_levels[(uint8_t)(log_buf.r[0])]);
         uart2_print("] ");
         log_buf.r = log_buf.buffer + (unsigned int)(((log_buf.r - log_buf.buffer) + 1) & (LOG_BUFFER_SIZE - 1));
@@ -122,6 +102,7 @@ void log_flush_msg()
         } else {
             uart2_puts(log_buf.r, size);
         }
+
         uart2_putc('\n');
         uart2_putc('\r');
 
@@ -129,7 +110,7 @@ void log_flush_msg()
     }
 }
 
-int log_is_empty()
+bool log_is_empty()
 {
-    return !!(log_buf.r == log_buf.w);
+    return (log_buf.r == log_buf.w);
 }

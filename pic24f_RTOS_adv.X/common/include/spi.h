@@ -75,9 +75,4 @@ static inline void spi_msg_init(struct spi_msg *msg)
     memset(msg, 0, sizeof *msg);
 }
 
-// static inline void spi_msg_add_tail(struct spi_req *req, struct spi_msg *msg)
-// {
-//         list_add_tail(&t->transfer_list, &m->transfers);
-// }
-
 #endif

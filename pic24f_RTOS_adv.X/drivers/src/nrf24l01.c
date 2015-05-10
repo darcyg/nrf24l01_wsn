@@ -34,7 +34,7 @@ struct driver nrf24l01_driver = {
 static int nrf24l01_init(struct device *dev)
 {
     struct nrf24l01_priv *nrf_dev = (struct nrf24l01_priv*)(dev->priv);
-    log_info("init nrf %s", dev->name);
+    log_debug("init nrf %d", dev->id);
     // Configure chip enable pin as output
     gpio_configure(nrf_dev->pin_ce, 0, 0);
 
@@ -79,9 +79,8 @@ void nrf24l01_set_configuration(struct device *dev,
     uint8_t data[5];
 
     // Register external interrupt routine
-    log_info("irq reg %d", register_ext_irq(nrf_dev->pin_irq, FALLING_EDGE,
-                           irq_callback, irq_priv,
-                           configKERNEL_INTERRUPT_PRIORITY));
+    register_ext_irq(nrf_dev->pin_irq, FALLING_EDGE,
+                     irq_callback, irq_priv, configKERNEL_INTERRUPT_PRIORITY);
 
     nrf24l01_write_register(dev, nrf24l01_EN_AA, &en_aa, 1);
     nrf24l01_write_register(dev, nrf24l01_EN_RXADDR, &en_rxaddr, 1);
@@ -140,7 +139,7 @@ void nrf24l01_set_configuration(struct device *dev,
     nrf24l01_write_register(dev, nrf24l01_FEATURE, &feature, 1);
     nrf24l01_write_register(dev, nrf24l01_CONFIG, &config, 1);
 
-    log_info("nrf init done");
+    log_debug("nrf init done");
 }
 
 uint8_t nrf24l01_get_config(struct device *dev)

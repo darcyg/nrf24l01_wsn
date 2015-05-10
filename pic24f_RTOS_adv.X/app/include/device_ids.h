@@ -16,29 +16,18 @@
  * this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef PIC24F_SPI2_H
-#define PIC24F_SPI2_H
+#ifndef DEVICE_IDS_H
+#define DEVICE_IDS_H
 
-#include <stdint.h>
-#include "spi.h"
+#define DEV_ROOT      0
+#define DEV_GPIO      1
+#define DEV_ADC       2
+#define DEV_EXT_IRQ   3
+#define DEV_IR_0      4
 
-extern struct spi_driver pic24f_spi2_driver;
+#define DEV_SPI2      0x10
+#define DEV_NRF24L01_0 (DEV_SPI2 | 1)
 
-// Export this structure to allocate on stack
-struct pic24f_spi_info {
-    // Transfer queue
-    struct spi_msg *head;
-    struct spi_msg *tail;
-    // Current request
-    struct spi_req *req;
-    // Index on request buffers
-    unsigned int tx_index;
-    unsigned int rx_index;
-    // Master device configuration
-    uint16_t *spi_con1;
-    uint16_t *spi_con2;
-    uint16_t *spi_stat;
-    // TODO: add other registers
-};
+#define DEV_I2C2      0x20
 
 #endif

@@ -1,4 +1,4 @@
-#include "HardwareProfile.h"
+#include "board_config.h"
 #include "pic24f_uart2.h"
 
 #include "queue.h"

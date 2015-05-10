@@ -19,14 +19,17 @@
 #ifndef _DEVICE_H
 #define _DEVICE_H
 
-#define ARRAY_SIZE(array) (sizeof(array) / sizeof(*array))
-#define BUS_LINK_DEVICES(devs) .c_dev = (struct device*)devs, .dev_count = ARRAY_SIZE(devs)
-#define BUS_LINK_DEVICES_NULL  .c_dev = NULL, .dev_count = 0
-#define BUS_LINK_BUSES(devs)   .c_bus = (struct bus*)devs, .vus_count = ARRAY_SIZE(devs)
-#define BUS_LINK_BUSES_NULL    .c_bus = NULL, .bus_count = 0
+#include "device_ids.h"
 
-#define INIT_PLATFORM_DEVICES(devices, buses) \
-    init_platform_devices(devices, ARRAY_SIZE(devices), buses, ARRAY_SIZE(buses))
+#define DECLARE_BUS_DEVICES(type, count) \
+    .dev_count = count, \
+    .c_dev = (struct device*)(struct type[])
+#define DECLARE_BUS_DEVICES_NULL  .c_dev = NULL, .dev_count = 0
+
+#define DECLARE_BUS_BUSES(type, count) \
+    .bus_count = count, \
+    .c_bus = (struct bus*)(struct type[])
+#define DECLARE_BUS_BUSES_NULL    .c_bus = NULL, .bus_count = 0
 
 struct device;
 struct bus;
@@ -39,16 +42,16 @@ void setup_device(void);
 
 struct device {
     struct bus *parent;
-    char *name;
+    const int id;
     void *priv;
-    struct driver *driver;
+    const struct driver *driver;
 };
 
 struct bus {
     struct bus *parent;
-    char *name;
+    const int id;
     void *priv;
-    struct bus_driver *driver;
+    const struct bus_driver *driver;
 
     struct bus    *c_bus;
     unsigned int bus_count;
@@ -65,8 +68,10 @@ struct bus_driver {
     int (*init_dev)(struct bus *bus, struct device *dev);
 };
 
-struct device* get_device(const char *name);
+struct device* get_device(const int id);
 
+#ifdef DEBUG
 void list_devices(void);
+#endif
 
 #endif

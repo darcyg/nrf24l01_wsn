@@ -16,7 +16,7 @@
  * this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "HardwareProfile.h"
+#include "board_config.h"
 #include <stdbool.h>
 #include "pic24f_adc.h"
 #include "device.h"

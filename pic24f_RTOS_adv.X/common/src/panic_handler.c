@@ -1,5 +1,7 @@
-#include "HardwareProfile.h"
+#include "board_config.h"
 #include "pic24f_uart2.h"
+#include "FreeRTOS.h"
+#include "task.h"
 
 #define SPDUMP_MAX  64   // Maximum stack to dump
 
@@ -19,7 +21,9 @@ void panic_handler(void)
 
     uart2_print("\r\n!!! PANIC ");
     uart2_printf("(%d - 0x%x) at 0x%x", TrapAddr, INTCON1, ErrorAddrLow);
-    uart2_print(" !!!\r\n\n");
+    uart2_print(" !!! task ");
+    uart2_print(pcTaskGetTaskName(xTaskGetCurrentTaskHandle()));
+    uart2_print("\n\r");
 
     for (i = 0; i < 16; i++) {
         if ((i & 7) == 0) {

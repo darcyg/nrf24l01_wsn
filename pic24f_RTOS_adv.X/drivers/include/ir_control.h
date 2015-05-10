@@ -21,12 +21,33 @@
 
 extern struct driver pic24f_ir_ctl_driver;
 
-struct pic24f_ir_ctl_priv {
-    uint8_t pin_led;
+void ir_sendRC5(uint32_t data, unsigned int nbits);
+void ir_sendCanal(uint32_t data, unsigned int nbits);
+void ir_sendNEC(uint32_t data, unsigned int nbits);
+
+// TODO: move implementation specific data somewhere else
+#include "timers.h"
+
+#define IR_QUEUE_SIZE  16
+
+struct ir_cmd;
+typedef void (*ir_handler) (struct ir_cmd *cmd);
+
+struct ir_cmd {
+    uint32_t     data;    /*!< Data to send */
+    unsigned int nbits;   /*!< Number of bits to send */
+    unsigned int step;    /*!< State for IR handle function */
+    ir_handler   handler; /*!< Function handler to send data */
 };
 
-void ir_sendRC5(uint32_t data, unsigned int nbits);
-void ir_sendRC5_ext(uint32_t data, unsigned int nbits);
+struct pic24f_ir_ctl_priv {
+    uint8_t pin_led;                           /*!< gpio IR LED pin */
+    // Internal driver variables
+    struct ir_cmd ir_cmd_queue[IR_QUEUE_SIZE]; /*!< Circular buffer to handle IR commands */
+    volatile struct ir_cmd *cur_ir_cmd;        /*!< Current processed command */
+    volatile unsigned int ir_head;             /*!< IR command queue head index */
+    volatile unsigned int ir_tail;             /*!< IR command queue tail index */
+    TimerHandle_t ir_timer;                    /*!< Timer for IR timeout */
+};
 
 #endif	/* IR_CONTROL_H */
-

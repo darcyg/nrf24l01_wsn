@@ -16,8 +16,9 @@
  * this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "HardwareProfile.h"
-#include <stdint.h>
+// Board configuration
+#include "board_config.h"
+// Common modules
 #include "device.h"
 #include "spi.h"
 #include "i2c.h"
@@ -32,6 +33,9 @@
 #include "ir_control.h"
 #include "nrf24l01.h"
 
+#define INIT_PLATFORM_DEVICES(devices, buses) \
+    init_platform_devices(devices, ARRAY_SIZE(devices), buses, ARRAY_SIZE(buses))
+
 _CONFIG1(WDTPS_PS1 & FWPSA_PR32 & WINDIS_OFF & FWDTEN_OFF & ICS_PGx1 & GWRP_OFF & GCP_OFF & JTAGEN_OFF)
 _CONFIG2(POSCMOD_HS & I2C1SEL_PRI & IOL1WAY_OFF & OSCIOFNC_ON & FCKSM_CSDCMD & FNOSC_FRCPLL & PLL96MHZ_ON & PLLDIV_DIV2 & IESO_ON)
 _CONFIG3(WPFP_WPFP0 & SOSCSEL_IO & WUTSEL_LEG & WPDIS_WPDIS & WPCFG_WPCFGDIS & WPEND_WPENDMEM)
@@ -39,17 +43,14 @@ _CONFIG4(DSWDTPS_DSWDTPS3 & DSWDTOSC_LPRC & RTCOSC_SOSC & DSBOREN_OFF & DSWDTEN_
 
 static void InitClock()
 {
-    //#error PIC24FJ64GB002 = __PIC24FJ64GB002__
     OSCCON = 0x1102;    // Enable secondary oscillator
     CLKDIV = 0x0000;    // Set PLL prescaler (1:1)
-    //OSCCON = 0x0000;	 //8Mhz
-    //CLKDIV	=	0x0000;	 //do not divide
-    //On the PIC24FJ64GB004 Family of USB microcontrollers, the PLL will not power up and be enabled
-    //by default, even if a PLL enabled oscillator configuration is selected (such as HS+PLL).
-    //This allows the device to power up at a lower initial operating frequency, which can be
-    //advantageous when powered from a source which is not gauranteed to be adequate for 32MHz
-    //operation.  On these devices, user firmware needs to manually set the CLKDIV<PLLEN> bit to
-    //power up the PLL.
+    // On the PIC24FJ64GB004 Family of USB microcontrollers, the PLL will not power up and be enabled
+    // by default, even if a PLL enabled oscillator configuration is selected (such as HS+PLL).
+    // This allows the device to power up at a lower initial operating frequency, which can be
+    // advantageous when powered from a source which is not gauranteed to be adequate for 32MHz
+    // operation. On these devices, user firmware needs to manually set the CLKDIV<PLLEN> bit to
+    // power up the PLL.
     {
         unsigned int pll_startup_counter = 6000;
         CLKDIVbits.PLLEN = 1;
@@ -78,30 +79,18 @@ static void InitPinMuxing()
     __builtin_write_OSCCONL(OSCCON | 0x40);
 }
 
-struct spi_device spi2_devices[] = {
-    {
-        .dev.name    = "nrf0",
-        .dev.driver  = &nrf24l01_driver,
-        .chip_select = GPIO_PORTA | 1,   // Chip select on RA1
-        .dev.priv = &(struct nrf24l01_priv) {
-            .pin_ce  = GPIO_PORTB | 5,
-            .pin_irq = INT1_PIN
-        }
-    }
-};
-
 struct device platform_devices[] = {
     {
-        .name = "gpio",
+        .id   = DEV_GPIO,
         .driver = &pic24f_gpio_driver
     }, {
-        .name = "adc",
+        .id     = DEV_ADC,
         .driver = &pic24f_adc_driver
     }, {
-        .name = "ext_irq",
+        .id     = DEV_EXT_IRQ,
         .driver = &pic24f_ext_irq_driver
     }, {
-        .name = "ir",
+        .id     = DEV_IR_0,
         .driver = &pic24f_ir_ctl_driver,
         .priv = &(struct pic24f_ir_ctl_priv) {
             .pin_led = GPIO_PORTB | 7
@@ -111,16 +100,27 @@ struct device platform_devices[] = {
 
 struct bus platform_bus_devices[] = {
     {
-        .name = "spi2",
+        .id     = DEV_SPI2,
         .driver = (struct bus_driver*)&pic24f_spi2_driver,
-        BUS_LINK_DEVICES(spi2_devices),
-        BUS_LINK_BUSES_NULL
+        .priv   = &(struct pic24f_spi_info) {},
+        DECLARE_BUS_DEVICES(spi_device, 1) {
+            {
+                .dev.id      = DEV_NRF24L01_0,
+                .dev.driver  = &nrf24l01_driver,
+                .chip_select = GPIO_PORTA | 1, // Chip select on RA1
+                .dev.priv = &(struct nrf24l01_priv) {
+                    .pin_ce  = GPIO_PORTB | 5, // Chip enable on RB5
+                    .pin_irq = INT1_PIN        // IRQ pin on INT1 (RA0)
+                }
+            }
+        },
+        DECLARE_BUS_BUSES_NULL
     },
     {
-        .name = "i2c2",
+        .id     = DEV_I2C2,
         .driver = (struct bus_driver*)&pic24f_i2c2_driver,
-        BUS_LINK_DEVICES_NULL,
-        BUS_LINK_BUSES_NULL
+        DECLARE_BUS_DEVICES_NULL,
+        DECLARE_BUS_BUSES_NULL
     }
 };
 
@@ -132,15 +132,6 @@ void setup_device(void)
     InitPinMuxing();
     // Init logger first
     uart2_init();
-
-    // Check RAM flag
-    if (*((volatile uint16_t*)0x2000) == 0xdead) {
-        uart2_print("Warm reset detected\n\r");
-    } else {
-        uart2_print("Cold reset\n\r");
-        *((volatile uint16_t*)0x2000) = 0xdead;
-    }
-
     // Init platform devices
     INIT_PLATFORM_DEVICES(platform_devices, platform_bus_devices);
 }

@@ -32,7 +32,7 @@
  *
  */
 
-#include "HardwareProfile.h"
+#include "board_config.h"
 #include "uip/uip.h"
 #include "mqtt.h"
 

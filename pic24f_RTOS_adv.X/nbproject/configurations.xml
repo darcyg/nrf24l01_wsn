@@ -5,12 +5,14 @@
                    displayName="Header Files"
                    projectFiles="true">
       <logicalFolder name="f4" displayName="app" projectFiles="true">
-        <itemPath>app/include/HardwareProfile.h</itemPath>
         <itemPath>app/include/uip-conf.h</itemPath>
         <itemPath>app/include/FreeRTOSConfig.h</itemPath>
         <itemPath>app/include/p24FJ64GB002.h</itemPath>
         <itemPath>app/include/p24FJ64GB002.inc</itemPath>
         <itemPath>app/include/Compiler.h</itemPath>
+        <itemPath>app/include/board_config.h</itemPath>
+        <itemPath>app/include/device_ids.h</itemPath>
+        <itemPath>app/include/mqtt-conf.h</itemPath>
       </logicalFolder>
       <logicalFolder name="f2" displayName="common" projectFiles="true">
         <itemPath>common/include/device.h</itemPath>

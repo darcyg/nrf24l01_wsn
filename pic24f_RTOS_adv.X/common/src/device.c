@@ -18,7 +18,6 @@
 
 #include <stdlib.h>
 #include <stdint.h>
-#include <string.h>
 #include "device.h"
 #include "logger.h"
 
@@ -28,7 +27,7 @@ static struct bus_driver root_device_driver = {
 };
 
 static struct bus root_device = {
-    .name   = "root_dev",
+    .id     = DEV_ROOT,
     .parent = NULL,
     .driver = &root_device_driver
 };
@@ -36,14 +35,14 @@ static struct bus root_device = {
 // Static functions to manage devices
 static int init_device(struct device *dev);
 static int init_bus(struct bus *bus);
-static struct device* find_device(struct bus *bus, const char *name);
+static struct device* find_device(struct bus *bus, const int id);
 
 static int init_device(struct device *dev)
 {
     int ret;
 
     if (dev->driver->init && (ret = dev->driver->init(dev)) != 0) {
-        log_error("init dev %s (%d)",  dev->name, ret);
+        log_error("init dev %d (%d)",  dev->id, ret);
         return ret;
     }
     return 0;
@@ -56,7 +55,7 @@ static int init_bus(struct bus *bus)
 
     // Init current bus
     if (bus->driver->init && (ret = bus->driver->init(bus)) != 0) {
-        log_error("init bus %s (%d)",  bus->name, ret);
+        log_error("init bus %d (%d)",  bus->id, ret);
         return ret;
     }
     // Init current bus devices
@@ -66,7 +65,7 @@ static int init_bus(struct bus *bus)
             return ret;
         }
         if (bus->driver->init_dev && (ret = bus->driver->init_dev(bus, &bus->c_dev[i])) != 0) {
-            log_error("init bus dev %s (%d)",  bus->name, ret);
+            log_error("init bus dev %d (%d)",  bus->id, ret);
             return ret;
         }
     }
@@ -91,20 +90,20 @@ int init_platform_devices(struct device *devices, unsigned int dev_count, struct
     return init_bus(&root_device);
 }
 
-static struct device* find_device(struct bus *bus, const char *name)
+static struct device* find_device(struct bus *bus, const int id)
 {
     unsigned int i;
     struct device *dev;
 
     for (i = 0; i < bus->dev_count; i++) {
-        if (!strcmp(bus->c_dev[i].name, name)) {
+        if (bus->c_dev[i].id == id) {
             // Device found
             return &bus->c_dev[i];
         }
     }
     // Search in child buses
     for (i = 0; i < bus->bus_count; i++) {
-        if ((dev = find_device(&bus->c_bus[i], name))) {
+        if ((dev = find_device(&bus->c_bus[i], id))) {
             // Device found
             return dev;
         }
@@ -112,22 +111,24 @@ static struct device* find_device(struct bus *bus, const char *name)
     return NULL;
 }
 
-struct device* get_device(const char *name)
+struct device* get_device(const int id)
 {
-    return find_device(&root_device, name);
+    return find_device(&root_device, id);
 }
 
+#ifdef DEBUG
 static void list_device(struct bus *bus, unsigned int level)
 {
     unsigned int i;
 
-    log_info("(%d) %s (%s)", level++, bus->name, bus->parent->name);
+    log_debug("(%d) %d (%d)", level, bus->id, bus->parent->id);
+    level++;
 
     for (i = 0; i < bus->bus_count; i++) {
         list_device(&bus->c_bus[i], level);
     }
     for (i = 0; i < bus->dev_count; i++) {
-        log_info("(%d) %s (%s)", level, bus->c_dev[i].name, bus->c_dev[i].parent->name);
+        log_debug("(%d) %d (%d)", level, bus->c_dev[i].id, bus->c_dev[i].parent->id);
     }
 }
 
@@ -135,3 +136,4 @@ void list_devices(void)
 {
     return list_device(&root_device, 0);
 }
+#endif

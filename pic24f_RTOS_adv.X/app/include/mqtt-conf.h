@@ -20,7 +20,9 @@
 #define	MQTT_CONF_H
 
 // Enable debug
-// #define MQTT_DEBUG
+#ifdef DEBUG
+    #define MQTT_DEBUG
+#endif
 
 //* MQTT CONFIGURATION **********************************************
 #define MQTT_MAX_PACKET_SIZE    128 // Maximum packet size
